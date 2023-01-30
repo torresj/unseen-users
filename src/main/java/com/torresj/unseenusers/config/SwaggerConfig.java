@@ -23,9 +23,9 @@ public class SwaggerConfig {
     return new OpenAPI()
         .info(
             new Info()
-                .title("Unseen Auth API")
+                .title("Unseen Users API")
                 .description(
-                    "Spring boot microservice to allow applications to authenticate and authorize users for Unseen")
+                    "Spring boot microservice to allow manage users for Unseen")
                 .version(version)
                 .license(
                     new License()
