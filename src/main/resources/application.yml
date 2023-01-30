@@ -1,0 +1,32 @@
+# HTTP Server
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+#Server info
+info:
+  app:
+    name: ${spring.application.name}
+    description: Unseen Users Service
+    groupId: com.torresj
+    artifactId: unseen-users
+    version: ${APP_VERSION:SNAPSHOT}
+
+#Loggin
+logging:
+  config: classpath:logback-spring-prod.xml
+
+# Cloud config
+spring:
+  config:
+    import: optional:configserver:${SPRING_CLOUD_CONFIG_URL:}
+  application:
+    name: ${SPRING_APPLICATION_NAME:unseen-users}
