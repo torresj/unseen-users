@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
 
   private static final String UUID_KEY = "UUID";
+
   @Value("${info.app.version}")
   private final String version;
 
@@ -24,8 +25,7 @@ public class SwaggerConfig {
         .info(
             new Info()
                 .title("Unseen Users API")
-                .description(
-                    "Spring boot microservice to allow manage users for Unseen")
+                .description("Spring boot microservice to allow manage users for Unseen")
                 .version(version)
                 .license(
                     new License()
