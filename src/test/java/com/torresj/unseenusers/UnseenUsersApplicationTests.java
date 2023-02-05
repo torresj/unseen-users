@@ -119,12 +119,60 @@ class UnseenUsersApplicationTests {
     var result =
         mockMvc
             .perform(
-                MockMvcRequestBuilders.get("/v1/users/1")
-                    .contentType(MediaType.APPLICATION_JSON))
+                MockMvcRequestBuilders.get("/v1/users/1").contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isNotFound());
 
     var error = result.andReturn().getResponse().getErrorMessage();
 
     Assertions.assertEquals("User 1 not found", error);
+  }
+
+  @Test
+  @DisplayName("Get user logged (by email)")
+  void getUserByEmail() throws Exception {
+    // Create a valid user in DB
+    UserEntity userEntity =
+        userMutationRepository.save(
+            GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true));
+
+    // Get
+    var result =
+        mockMvc
+            .perform(
+                MockMvcRequestBuilders.get("/v1/users/me?email=" + email)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+
+    // Result
+    var content = result.andReturn().getResponse().getContentAsString();
+    User user = objectMapper.readValue(content, User.class);
+
+    Assertions.assertEquals(email, user.getEmail());
+    Assertions.assertEquals(email, user.getName());
+    Assertions.assertEquals(userEntity.getId(), user.getId());
+    Assertions.assertEquals(AuthProvider.UNSEEN, user.getProvider());
+    Assertions.assertEquals(Role.USER, user.getRole());
+    Assertions.assertEquals(1, user.getNumLogins());
+    Assertions.assertNotNull(user.getCreateAt());
+    Assertions.assertNotNull(user.getUpdateAt());
+    Assertions.assertNotNull(user.getLastConnection());
+    Assertions.assertNull(user.getPhotoUrl());
+  }
+
+  @Test
+  @DisplayName("Get user logged (by email) that not exists")
+  void getUserByEmailNotFound() throws Exception {
+
+    // Get
+    var result =
+        mockMvc
+            .perform(
+                MockMvcRequestBuilders.get("/v1/users/me?email=" + email)
+                    .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isNotFound());
+
+    var error = result.andReturn().getResponse().getErrorMessage();
+
+    Assertions.assertEquals("User " + email + " not found", error);
   }
 }

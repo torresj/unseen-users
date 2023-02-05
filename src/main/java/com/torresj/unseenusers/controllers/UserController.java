@@ -94,4 +94,37 @@ public class UserController {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
     }
   }
+
+  @Operation(summary = "Get user by email")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Success",
+            content = {
+              @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = User.class))
+            }),
+        @ApiResponse(
+            responseCode = "404",
+            description = "User not found",
+            content = {@Content(mediaType = "application/json")})
+      })
+  @GetMapping("/me")
+  public ResponseEntity<User> me(
+      @Parameter(description = "User email") @RequestParam String email) {
+    try {
+      log.info("[USERS] Getting user by email " + email);
+
+      User user = userService.user(email);
+
+      log.info("[USERS] User " + email + " found");
+
+      return ResponseEntity.ok(user);
+    } catch (UserNotFoundException exception) {
+      log.error(exception.getMessage());
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+  }
 }

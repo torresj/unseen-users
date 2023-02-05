@@ -150,12 +150,42 @@ class UserServiceTest {
   void getUserByIDNotFound() throws UserNotFoundException {
 
     // Mocks
-    when(userQueryRepository.findById(any()))
-        .thenReturn(Optional.empty());
+    when(userQueryRepository.findById(any())).thenReturn(Optional.empty());
 
     Assertions.assertThrows(
         UserNotFoundException.class,
         () -> userService.user(1),
+        "User not found exception should be thrown");
+  }
+
+  @Test
+  @DisplayName("Get user by email")
+  void getUserByEmail() throws UserNotFoundException {
+    UserEntity userEntityMock = GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true);
+    userEntityMock.setId(1l);
+
+    // Mocks
+    when(userQueryRepository.findByEmail(email)).thenReturn(Optional.of(userEntityMock));
+
+    User user = userService.user(email);
+
+    Assertions.assertEquals(email, user.getEmail());
+    Assertions.assertEquals(email, user.getName());
+    Assertions.assertEquals(userEntityMock.getId(), user.getId());
+    Assertions.assertEquals(AuthProvider.UNSEEN, user.getProvider());
+    Assertions.assertEquals(Role.USER, user.getRole());
+  }
+
+  @Test
+  @DisplayName("Get user by email not found")
+  void getUserByEmailNotFound() throws UserNotFoundException {
+
+    // Mocks
+    when(userQueryRepository.findByEmail(any())).thenReturn(Optional.empty());
+
+    Assertions.assertThrows(
+        UserNotFoundException.class,
+        () -> userService.user(""),
         "User not found exception should be thrown");
   }
 }

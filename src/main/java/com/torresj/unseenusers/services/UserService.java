@@ -66,4 +66,19 @@ public class UserService {
 
     return user;
   }
+
+  public User user(String email) throws UserNotFoundException {
+    log.debug("[USER SERVICE] Getting user " + email);
+
+    // Finding user in DB
+    UserEntity userEntity =
+        userQueryRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
+
+    // Mapping user
+    User user = userMapper.toUserDto(userEntity);
+
+    log.debug("[USER SERVICE] User found: " + user);
+
+    return user;
+  }
 }
