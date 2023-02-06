@@ -4,6 +4,7 @@ import com.torresj.unseenusers.dtos.PageUser;
 import com.torresj.unseenusers.dtos.User;
 import com.torresj.unseenusers.entities.Role;
 import com.torresj.unseenusers.entities.UserEntity;
+import com.torresj.unseenusers.exceptions.UserAlreadyExistsException;
 import com.torresj.unseenusers.exceptions.UserNotFoundException;
 import com.torresj.unseenusers.mappers.PageMapper;
 import com.torresj.unseenusers.mappers.UserMapper;
@@ -78,6 +79,26 @@ public class UserService {
     User user = userMapper.toUserDto(userEntity);
 
     log.debug("[USER SERVICE] User found: " + user);
+
+    return user;
+  }
+
+  public User create(User user) throws UserAlreadyExistsException {
+    log.debug("[USER SERVICE] Saving user " + user.getEmail());
+
+    // Finding user in DB
+    if(userQueryRepository.findByEmail(user.getEmail()).isPresent()) throw new UserAlreadyExistsException(user.getEmail());
+
+    // Mapping user
+    UserEntity userEntity = userMapper.toEntity(user);
+
+    // Saving entity
+    UserEntity userEntityFromDB = userMutationRepository.save(userEntity);
+
+    // Mapping to User
+    User userFromDB = userMapper.toUserDto(userEntityFromDB);
+
+    log.debug("[USER SERVICE] User created: " + user);
 
     return user;
   }
