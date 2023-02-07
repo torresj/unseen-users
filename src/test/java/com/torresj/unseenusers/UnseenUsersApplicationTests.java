@@ -3,6 +3,7 @@ package com.torresj.unseenusers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.torresj.unseenusers.dtos.PageUser;
 import com.torresj.unseenusers.dtos.User;
+import com.torresj.unseenusers.dtos.UserRegister;
 import com.torresj.unseenusers.entities.AuthProvider;
 import com.torresj.unseenusers.entities.Role;
 import com.torresj.unseenusers.entities.UserEntity;
@@ -19,6 +20,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import java.util.Optional;
 
 import static com.torresj.unseenusers.utils.TestUtils.GenerateUser;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -174,5 +177,59 @@ class UnseenUsersApplicationTests {
     var error = result.andReturn().getResponse().getErrorMessage();
 
     Assertions.assertEquals("User " + email + " not found", error);
+  }
+
+  @Test
+  @DisplayName("Register new user")
+  void registerUser() throws Exception {
+    // user to register
+    UserRegister userRegister = new UserRegister(email, email, password);
+
+    // Register
+    var result =
+        mockMvc
+            .perform(
+                MockMvcRequestBuilders.post("/v1/users/register")
+                    .accept(MediaType.APPLICATION_JSON)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(userRegister)))
+            .andExpect(status().isCreated());
+
+    // Result
+    String location = result.andReturn().getResponse().getHeader("location");
+    Optional<UserEntity> user = userQueryRepository.findByEmail(email);
+
+    Assertions.assertTrue(user.isPresent());
+    Assertions.assertEquals(email, user.get().getEmail());
+    Assertions.assertEquals(email, user.get().getName());
+    Assertions.assertEquals(AuthProvider.UNSEEN, user.get().getProvider());
+    Assertions.assertEquals(Role.USER, user.get().getRole());
+    Assertions.assertEquals(0, user.get().getNumLogins());
+    Assertions.assertNotNull(user.get().getCreateAt());
+    Assertions.assertNotNull(user.get().getUpdateAt());
+    Assertions.assertNull(user.get().getLastConnection());
+    Assertions.assertNull(user.get().getPhotoUrl());
+    Assertions.assertTrue(location.contains("/v1/users/" + user.get().getId()));
+  }
+
+  @Test
+  @DisplayName("Register user already exists")
+  void registerUserAlreadyExists() throws Exception {
+    // Create a valid user in DB
+    UserEntity userEntity =
+        userMutationRepository.save(
+            GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true));
+
+    // user to register
+    UserRegister userRegister = new UserRegister(email, email, password);
+
+    // Register
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.post("/v1/users/register")
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userRegister)))
+        .andExpect(status().isBadRequest());
   }
 }

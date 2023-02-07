@@ -2,6 +2,7 @@ package com.torresj.unseenusers.controllers;
 
 import com.torresj.unseenusers.dtos.PageUser;
 import com.torresj.unseenusers.dtos.User;
+import com.torresj.unseenusers.dtos.UserRegister;
 import com.torresj.unseenusers.entities.Role;
 import com.torresj.unseenusers.exceptions.UserAlreadyExistsException;
 import com.torresj.unseenusers.exceptions.UserNotFoundException;
@@ -130,37 +131,36 @@ public class UserController {
     }
   }
 
-  @Operation(summary = "Create an User")
+  @Operation(summary = "Register Unseen user")
   @ApiResponses(
       value = {
         @ApiResponse(
             responseCode = "201",
             description = "User created",
-            content = {
-              @Content(
-                  mediaType = "application/json",
-                  schema = @Schema(implementation = User.class))
-            }),
-        @ApiResponse(responseCode = "400", description = "User already exists")
+            content = {@Content()}),
+        @ApiResponse(
+            responseCode = "400",
+            description = "User already exists",
+            content = {@Content()})
       })
-  @PostMapping
-  public ResponseEntity create(
+  @PostMapping("/register")
+  public ResponseEntity register(
       @io.swagger.v3.oas.annotations.parameters.RequestBody(
-              description = "Unseen User",
+              description = "Register user data",
               required = true,
-              content = @Content(schema = @Schema(implementation = User.class)))
+              content = @Content(schema = @Schema(implementation = UserRegister.class)))
           @RequestBody
-          User user) {
+          UserRegister userRegister) {
     try {
-      log.info("[USERS] Creating user " + user.getEmail());
+      log.info("[USERS] Creating user " + userRegister.email());
 
-      User userCreated = userService.create(user);
+      User userCreated = userService.register(userRegister);
 
       log.info("[USERS] User " + userCreated.getEmail() + " created");
 
       return ResponseEntity.created(
-              ServletUriComponentsBuilder.fromCurrentRequest()
-                  .path("/" + userCreated.getId())
+              ServletUriComponentsBuilder.fromCurrentContextPath()
+                  .path("/v1/users/" + userCreated.getId())
                   .buildAndExpand(userCreated)
                   .toUri())
           .build();

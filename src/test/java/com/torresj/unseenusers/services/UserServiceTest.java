@@ -2,9 +2,11 @@ package com.torresj.unseenusers.services;
 
 import com.torresj.unseenusers.dtos.PageUser;
 import com.torresj.unseenusers.dtos.User;
+import com.torresj.unseenusers.dtos.UserRegister;
 import com.torresj.unseenusers.entities.AuthProvider;
 import com.torresj.unseenusers.entities.Role;
 import com.torresj.unseenusers.entities.UserEntity;
+import com.torresj.unseenusers.exceptions.UserAlreadyExistsException;
 import com.torresj.unseenusers.exceptions.UserNotFoundException;
 import com.torresj.unseenusers.mappers.PageMapper;
 import com.torresj.unseenusers.mappers.UserMapper;
@@ -187,5 +189,40 @@ class UserServiceTest {
         UserNotFoundException.class,
         () -> userService.user(""),
         "User not found exception should be thrown");
+  }
+
+  @Test
+  @DisplayName("Register user")
+  void registerUser() throws UserAlreadyExistsException {
+
+    UserEntity userEntityMock = GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true);
+    userEntityMock.setId(1l);
+
+    // Mocks
+    when(userMutationRepository.save(any())).thenReturn(userEntityMock);
+
+    User user = userService.register(new UserRegister(email, email, password));
+
+    Assertions.assertEquals(email, user.getEmail());
+    Assertions.assertEquals(email, user.getName());
+    Assertions.assertEquals(userEntityMock.getId(), user.getId());
+    Assertions.assertEquals(AuthProvider.UNSEEN, user.getProvider());
+    Assertions.assertEquals(Role.USER, user.getRole());
+  }
+
+  @Test
+  @DisplayName("Register user that already exists")
+  void registerUserAlreadyExists() {
+
+    UserEntity userEntityMock = GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true);
+    userEntityMock.setId(1l);
+
+    // Mocks
+    when(userQueryRepository.findByEmail(any())).thenReturn(Optional.of(userEntityMock));
+
+    Assertions.assertThrows(
+        UserAlreadyExistsException.class,
+        () -> userService.register(new UserRegister(email, email, password)),
+        "User already exists exception should be thrown");
   }
 }
