@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder(toBuilder = true)
-public class PageUser {
-	private PageInfo pageInfo;
-	private List<User> content;
+public class PageUserDto {
+	private PageInfoDto pageInfo;
+	private List<UserDto> content;
 }

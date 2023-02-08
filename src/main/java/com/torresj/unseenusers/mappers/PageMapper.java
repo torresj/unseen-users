@@ -1,7 +1,7 @@
 package com.torresj.unseenusers.mappers;
 
-import com.torresj.unseenusers.dtos.PageInfo;
-import com.torresj.unseenusers.dtos.PageUser;
+import com.torresj.unseenusers.dtos.PageInfoDto;
+import com.torresj.unseenusers.dtos.PageUserDto;
 import com.torresj.unseenusers.entities.UserEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,11 +14,11 @@ import java.util.stream.Collectors;
 public class PageMapper {
   private final UserMapper userMapper;
 
-  public PageUser toPageUser(Page<UserEntity> page) {
-    return PageUser.builder()
+  public PageUserDto toPageUser(Page<UserEntity> page) {
+    return PageUserDto.builder()
         .content(page.getContent().stream().map(userMapper::toUserDto).collect(Collectors.toList()))
         .pageInfo(
-            PageInfo.builder()
+            PageInfoDto.builder()
                 .page(page.getPageable().getPageNumber())
                 .elements(page.getPageable().getPageSize())
                 .totalElements(page.getTotalElements())

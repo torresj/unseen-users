@@ -1,8 +1,8 @@
 package com.torresj.unseenusers.controllers;
 
-import com.torresj.unseenusers.dtos.PageUser;
-import com.torresj.unseenusers.dtos.User;
-import com.torresj.unseenusers.dtos.UserRegister;
+import com.torresj.unseenusers.dtos.PageUserDto;
+import com.torresj.unseenusers.dtos.UserDto;
+import com.torresj.unseenusers.dtos.UserRegisterDto;
 import com.torresj.unseenusers.entities.Role;
 import com.torresj.unseenusers.exceptions.UserAlreadyExistsException;
 import com.torresj.unseenusers.exceptions.UserNotFoundException;
@@ -38,11 +38,11 @@ public class UserController {
             content = {
               @Content(
                   mediaType = "application/json",
-                  schema = @Schema(implementation = PageUser.class))
+                  schema = @Schema(implementation = PageUserDto.class))
             })
       })
   @GetMapping
-  public ResponseEntity<PageUser> users(
+  public ResponseEntity<PageUserDto> users(
       @Parameter(description = "Number of page") @RequestParam int page,
       @Parameter(description = "Number of elements per page") @RequestParam int elements,
       @Parameter(description = "Filter to find by email") @RequestParam(required = false)
@@ -75,7 +75,7 @@ public class UserController {
             content = {
               @Content(
                   mediaType = "application/json",
-                  schema = @Schema(implementation = User.class))
+                  schema = @Schema(implementation = UserDto.class))
             }),
         @ApiResponse(
             responseCode = "404",
@@ -83,11 +83,11 @@ public class UserController {
             content = {@Content(mediaType = "application/json")})
       })
   @GetMapping("/{id}")
-  public ResponseEntity<User> user(@Parameter(description = "User id") @PathVariable long id) {
+  public ResponseEntity<UserDto> user(@Parameter(description = "User id") @PathVariable long id) {
     try {
       log.info("[USERS] Getting user id " + id);
 
-      User user = userService.user(id);
+      UserDto user = userService.user(id);
 
       log.info("[USERS] User " + id + " found");
 
@@ -107,7 +107,7 @@ public class UserController {
             content = {
               @Content(
                   mediaType = "application/json",
-                  schema = @Schema(implementation = User.class))
+                  schema = @Schema(implementation = UserDto.class))
             }),
         @ApiResponse(
             responseCode = "404",
@@ -115,12 +115,12 @@ public class UserController {
             content = {@Content(mediaType = "application/json")})
       })
   @GetMapping("/me")
-  public ResponseEntity<User> me(
+  public ResponseEntity<UserDto> me(
       @Parameter(description = "User email") @RequestParam String email) {
     try {
       log.info("[USERS] Getting user by email " + email);
 
-      User user = userService.user(email);
+      UserDto user = userService.user(email);
 
       log.info("[USERS] User " + email + " found");
 
@@ -148,13 +148,13 @@ public class UserController {
       @io.swagger.v3.oas.annotations.parameters.RequestBody(
               description = "Register user data",
               required = true,
-              content = @Content(schema = @Schema(implementation = UserRegister.class)))
+              content = @Content(schema = @Schema(implementation = UserRegisterDto.class)))
           @RequestBody
-          UserRegister userRegister) {
+          UserRegisterDto userRegister) {
     try {
       log.info("[USERS] Creating user " + userRegister.email());
 
-      User userCreated = userService.register(userRegister);
+      UserDto userCreated = userService.register(userRegister);
 
       log.info("[USERS] User " + userCreated.getEmail() + " created");
 

@@ -1,8 +1,9 @@
 package com.torresj.unseenusers.services;
 
-import com.torresj.unseenusers.dtos.PageUser;
-import com.torresj.unseenusers.dtos.User;
-import com.torresj.unseenusers.dtos.UserRegister;
+import com.torresj.unseenusers.dtos.PageUserDto;
+import com.torresj.unseenusers.dtos.UpdateUserDto;
+import com.torresj.unseenusers.dtos.UserDto;
+import com.torresj.unseenusers.dtos.UserRegisterDto;
 import com.torresj.unseenusers.entities.AuthProvider;
 import com.torresj.unseenusers.entities.Role;
 import com.torresj.unseenusers.entities.UserEntity;
@@ -28,14 +29,14 @@ public class UserService {
   private final PageMapper pageMapper;
   private final UserMapper userMapper;
 
-  public PageUser users(int page, int elements, String filter, Role role) {
+  public PageUserDto users(int page, int elements, String filter, Role role) {
     log.debug("[USER SERVICE] Getting users");
 
     // Create pageRequest
     var pageRequest = PageRequest.of(page, elements, Sort.by("createAt").descending());
 
     // Create Page
-    Page<UserEntity> pageFromDB = null;
+    Page<UserEntity> pageFromDB;
 
     // Check filters
     if (filter != null && role != null) {
@@ -55,7 +56,7 @@ public class UserService {
     return result;
   }
 
-  public User user(long id) throws UserNotFoundException {
+  public UserDto user(long id) throws UserNotFoundException {
     log.debug("[USER SERVICE] Getting user " + id);
 
     // Finding user in DB
@@ -63,14 +64,14 @@ public class UserService {
         userQueryRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
 
     // Mapping user
-    User user = userMapper.toUserDto(userEntity);
+    UserDto user = userMapper.toUserDto(userEntity);
 
     log.debug("[USER SERVICE] User found: " + user);
 
     return user;
   }
 
-  public User user(String email) throws UserNotFoundException {
+  public UserDto user(String email) throws UserNotFoundException {
     log.debug("[USER SERVICE] Getting user " + email);
 
     // Finding user in DB
@@ -78,14 +79,14 @@ public class UserService {
         userQueryRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
 
     // Mapping user
-    User user = userMapper.toUserDto(userEntity);
+    UserDto user = userMapper.toUserDto(userEntity);
 
     log.debug("[USER SERVICE] User found: " + user);
 
     return user;
   }
 
-  public User register(UserRegister userRegister) throws UserAlreadyExistsException {
+  public UserDto register(UserRegisterDto userRegister) throws UserAlreadyExistsException {
     log.debug("[USER SERVICE] Saving user " + userRegister.email());
 
     // Finding user in DB
@@ -106,9 +107,38 @@ public class UserService {
     UserEntity userEntityFromDB = userMutationRepository.save(userEntity);
 
     // Mapping to User
-    User user = userMapper.toUserDto(userEntityFromDB);
+    UserDto user = userMapper.toUserDto(userEntityFromDB);
 
     log.debug("[USER SERVICE] User created: " + user);
+
+    return user;
+  }
+
+  public UserDto update(long id, UpdateUserDto updateUserDto) throws UserNotFoundException {
+    log.debug("[USER SERVICE] Updating user " + id + " " + updateUserDto);
+
+    // Finding user in DB
+    UserEntity userEntity =
+        userQueryRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+
+    // Updating user
+    userEntity.setName(
+        updateUserDto.getName().isBlank() ? userEntity.getName() : updateUserDto.getName());
+    userEntity.setPassword(
+        updateUserDto.getPassword().isBlank()
+            ? userEntity.getPassword()
+            : updateUserDto.getPassword());
+    userEntity.setRole(
+        updateUserDto.getRole() == null ? userEntity.getRole() : updateUserDto.getRole());
+    userEntity.setValidated(userEntity.isValidated() || updateUserDto.isValidated());
+
+    // Saving entity
+    UserEntity userEntityFromDB = userMutationRepository.save(userEntity);
+
+    // Mapping to User
+    UserDto user = userMapper.toUserDto(userEntityFromDB);
+
+    log.debug("[USER SERVICE] User updated: " + user);
 
     return user;
   }

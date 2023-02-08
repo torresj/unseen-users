@@ -1,9 +1,9 @@
 package com.torresj.unseenusers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.torresj.unseenusers.dtos.PageUser;
-import com.torresj.unseenusers.dtos.User;
-import com.torresj.unseenusers.dtos.UserRegister;
+import com.torresj.unseenusers.dtos.PageUserDto;
+import com.torresj.unseenusers.dtos.UserDto;
+import com.torresj.unseenusers.dtos.UserRegisterDto;
 import com.torresj.unseenusers.entities.AuthProvider;
 import com.torresj.unseenusers.entities.Role;
 import com.torresj.unseenusers.entities.UserEntity;
@@ -71,7 +71,7 @@ class UnseenUsersApplicationTests {
 
     // Result
     var content = result.andReturn().getResponse().getContentAsString();
-    PageUser page = objectMapper.readValue(content, PageUser.class);
+    PageUserDto page = objectMapper.readValue(content, PageUserDto.class);
 
     Assertions.assertEquals(2, page.getPageInfo().getTotalElements());
     Assertions.assertEquals(1, page.getPageInfo().getTotalPages());
@@ -100,7 +100,7 @@ class UnseenUsersApplicationTests {
 
     // Result
     var content = result.andReturn().getResponse().getContentAsString();
-    User user = objectMapper.readValue(content, User.class);
+    UserDto user = objectMapper.readValue(content, UserDto.class);
 
     Assertions.assertEquals(email, user.getEmail());
     Assertions.assertEquals(email, user.getName());
@@ -148,7 +148,7 @@ class UnseenUsersApplicationTests {
 
     // Result
     var content = result.andReturn().getResponse().getContentAsString();
-    User user = objectMapper.readValue(content, User.class);
+    UserDto user = objectMapper.readValue(content, UserDto.class);
 
     Assertions.assertEquals(email, user.getEmail());
     Assertions.assertEquals(email, user.getName());
@@ -183,7 +183,7 @@ class UnseenUsersApplicationTests {
   @DisplayName("Register new user")
   void registerUser() throws Exception {
     // user to register
-    UserRegister userRegister = new UserRegister(email, email, password);
+    UserRegisterDto userRegister = new UserRegisterDto(email, email, password);
 
     // Register
     var result =
@@ -221,7 +221,7 @@ class UnseenUsersApplicationTests {
             GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true));
 
     // user to register
-    UserRegister userRegister = new UserRegister(email, email, password);
+    UserRegisterDto userRegister = new UserRegisterDto(email, email, password);
 
     // Register
     mockMvc
