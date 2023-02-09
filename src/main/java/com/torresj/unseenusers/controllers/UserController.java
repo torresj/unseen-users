@@ -1,6 +1,7 @@
 package com.torresj.unseenusers.controllers;
 
 import com.torresj.unseenusers.dtos.PageUserDto;
+import com.torresj.unseenusers.dtos.UpdateUserDto;
 import com.torresj.unseenusers.dtos.UserDto;
 import com.torresj.unseenusers.dtos.UserRegisterDto;
 import com.torresj.unseenusers.entities.Role;
@@ -167,6 +168,41 @@ public class UserController {
     } catch (UserAlreadyExistsException exception) {
       log.error(exception.getMessage());
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+  }
+
+  @Operation(summary = "Update user")
+  @ApiResponses(
+      value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "User updated",
+            content = {@Content()}),
+        @ApiResponse(
+            responseCode = "404",
+            description = "User not found",
+            content = {@Content()})
+      })
+  @PatchMapping("/{id}")
+  public ResponseEntity update(
+      @Parameter(description = "User id") @PathVariable long id,
+      @io.swagger.v3.oas.annotations.parameters.RequestBody(
+              description = "Update user data",
+              required = true,
+              content = @Content(schema = @Schema(implementation = UpdateUserDto.class)))
+          @RequestBody
+          UpdateUserDto updateUserDto) {
+    try {
+      log.info("[USERS] Updating user " + id);
+
+      UserDto userUpdated = userService.update(id,updateUserDto);
+
+      log.info("[USERS] User " + userUpdated.getId() + " updated");
+
+      return ResponseEntity.ok().build();
+    } catch (UserNotFoundException exception) {
+      log.error(exception.getMessage());
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, exception.getMessage());
     }
   }
 }

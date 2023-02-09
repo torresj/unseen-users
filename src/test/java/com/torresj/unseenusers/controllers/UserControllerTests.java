@@ -1,7 +1,8 @@
-package com.torresj.unseenusers;
+package com.torresj.unseenusers.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.torresj.unseenusers.dtos.PageUserDto;
+import com.torresj.unseenusers.dtos.UpdateUserDto;
 import com.torresj.unseenusers.dtos.UserDto;
 import com.torresj.unseenusers.dtos.UserRegisterDto;
 import com.torresj.unseenusers.entities.AuthProvider;
@@ -22,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.Optional;
+import java.util.Random;
 
 import static com.torresj.unseenusers.utils.TestUtils.GenerateUser;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
-class UnseenUsersApplicationTests {
+class UserControllerTests {
 
   private final String email = "test@test.com";
   private final String password = "test";
@@ -54,12 +56,10 @@ class UnseenUsersApplicationTests {
   @DisplayName("Get users")
   void getUsers() throws Exception {
     // Create a valid user in DB
-    UserEntity user =
-        userMutationRepository.save(
-            GenerateUser(email, password, Role.ADMIN, AuthProvider.UNSEEN, true));
-    UserEntity user2 =
-        userMutationRepository.save(
-            GenerateUser(email + 2, password, Role.ADMIN, AuthProvider.UNSEEN, true));
+    userMutationRepository.save(
+        GenerateUser(email, password, Role.ADMIN, AuthProvider.UNSEEN, true));
+    userMutationRepository.save(
+        GenerateUser(email + 2, password, Role.ADMIN, AuthProvider.UNSEEN, true));
 
     // Get
     var result =
@@ -201,6 +201,7 @@ class UnseenUsersApplicationTests {
 
     Assertions.assertTrue(user.isPresent());
     Assertions.assertEquals(email, user.get().getEmail());
+    Assertions.assertEquals(password, user.get().getPassword());
     Assertions.assertEquals(email, user.get().getName());
     Assertions.assertEquals(AuthProvider.UNSEEN, user.get().getProvider());
     Assertions.assertEquals(Role.USER, user.get().getRole());
@@ -209,6 +210,7 @@ class UnseenUsersApplicationTests {
     Assertions.assertNotNull(user.get().getUpdateAt());
     Assertions.assertNull(user.get().getLastConnection());
     Assertions.assertNull(user.get().getPhotoUrl());
+    Assertions.assertNotNull(location);
     Assertions.assertTrue(location.contains("/v1/users/" + user.get().getId()));
   }
 
@@ -216,9 +218,8 @@ class UnseenUsersApplicationTests {
   @DisplayName("Register user already exists")
   void registerUserAlreadyExists() throws Exception {
     // Create a valid user in DB
-    UserEntity userEntity =
-        userMutationRepository.save(
-            GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true));
+    userMutationRepository.save(
+        GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true));
 
     // user to register
     UserRegisterDto userRegister = new UserRegisterDto(email, email, password);
@@ -231,5 +232,57 @@ class UnseenUsersApplicationTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(userRegister)))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  @DisplayName("Update user")
+  void updateUser() throws Exception {
+    // Create a valid user in DB
+    UserEntity userEntity =
+        userMutationRepository.save(
+            GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, false));
+
+    // Update user data
+    UpdateUserDto updateUserDto = new UpdateUserDto(email + "2", password + "2", true, Role.ADMIN);
+
+    // Register
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.patch("/v1/users/" + userEntity.getId())
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateUserDto)))
+        .andExpect(status().isOk());
+
+    Optional<UserEntity> user = userQueryRepository.findByEmail(email);
+
+    Assertions.assertTrue(user.isPresent());
+    Assertions.assertEquals(email, user.get().getEmail());
+    Assertions.assertEquals(email + "2", user.get().getName());
+    Assertions.assertEquals(password + "2", user.get().getPassword());
+    Assertions.assertEquals(AuthProvider.UNSEEN, user.get().getProvider());
+    Assertions.assertEquals(Role.ADMIN, user.get().getRole());
+    Assertions.assertEquals(1, user.get().getNumLogins());
+    Assertions.assertNotNull(user.get().getCreateAt());
+    Assertions.assertNotNull(user.get().getUpdateAt());
+    Assertions.assertNotNull(user.get().getLastConnection());
+    Assertions.assertNull(user.get().getPhotoUrl());
+  }
+
+  @Test
+  @DisplayName("Update user that not exists")
+  void updateUserNotExists() throws Exception {
+
+    // Update user data
+    UpdateUserDto updateUserDto = new UpdateUserDto(email, password, true, Role.ADMIN);
+
+    // Register
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.patch("/v1/users/" + new Random().nextInt())
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateUserDto)))
+        .andExpect(status().isNotFound());
   }
 }
