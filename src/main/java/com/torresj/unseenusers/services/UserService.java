@@ -123,9 +123,11 @@ public class UserService {
 
     // Updating user
     userEntity.setName(
-        updateUserDto.getName().isBlank() ? userEntity.getName() : updateUserDto.getName());
+        updateUserDto.getName() == null || updateUserDto.getName().isBlank()
+            ? userEntity.getName()
+            : updateUserDto.getName());
     userEntity.setPassword(
-        updateUserDto.getPassword().isBlank()
+        updateUserDto.getPassword() == null || updateUserDto.getPassword().isBlank()
             ? userEntity.getPassword()
             : updateUserDto.getPassword());
     userEntity.setRole(
