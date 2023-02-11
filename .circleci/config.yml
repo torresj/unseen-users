@@ -44,7 +44,7 @@ jobs:
       # Build
       - run:
           name: Build
-          command: mvn -Drevision=$REVISION -Dcertificate-authority-data=$CERTIFICATE_AUTHORITY_DATA -Dcluster=$CLUSTER -Dclient-certificate-data=$CLIENT_CERTIFICATE_DATA -Dclient-key-data=$CLIENT_KEY_DATA -Dkubernetes-user=$KUBERNETES_USER -DskipTests package
+          command: mvn -s ./settings.xml -Drevision=$REVISION -Dcertificate-authority-data=$CERTIFICATE_AUTHORITY_DATA -Dcluster=$CLUSTER -Dclient-certificate-data=$CLIENT_CERTIFICATE_DATA -Dclient-key-data=$CLIENT_KEY_DATA -Dkubernetes-user=$KUBERNETES_USER -DskipTests package
       # Persist build
       - persist_to_workspace:
           root: target
@@ -86,6 +86,7 @@ workflows:
       - build:
           context:
             - "Kubernetes cluster"
+            - "Github package"
       - deploy:
           context:
             - "Kubernetes cluster"
