@@ -1,10 +1,10 @@
 package com.torresj.unseenusers.controllers;
 
+import com.torresj.unseen.entities.Role;
 import com.torresj.unseenusers.dtos.PageUserDto;
 import com.torresj.unseenusers.dtos.UpdateUserDto;
 import com.torresj.unseenusers.dtos.UserDto;
 import com.torresj.unseenusers.dtos.UserRegisterDto;
-import com.torresj.unseenusers.entities.Role;
 import com.torresj.unseenusers.exceptions.UserAlreadyExistsException;
 import com.torresj.unseenusers.exceptions.UserNotFoundException;
 import com.torresj.unseenusers.services.UserService;
@@ -195,7 +195,7 @@ public class UserController {
     try {
       log.info("[USERS] Updating user " + id);
 
-      UserDto userUpdated = userService.update(id,updateUserDto);
+      UserDto userUpdated = userService.update(id, updateUserDto);
 
       log.info("[USERS] User " + userUpdated.getId() + " updated");
 

@@ -1,8 +1,8 @@
 package com.torresj.unseenusers.mappers;
 
+import com.torresj.unseen.entities.UserEntity;
 import com.torresj.unseenusers.dtos.PageInfoDto;
 import com.torresj.unseenusers.dtos.PageUserDto;
-import com.torresj.unseenusers.entities.UserEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;

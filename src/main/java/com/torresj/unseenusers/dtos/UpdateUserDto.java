@@ -1,6 +1,6 @@
 package com.torresj.unseenusers.dtos;
 
-import com.torresj.unseenusers.entities.Role;
+import com.torresj.unseen.entities.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

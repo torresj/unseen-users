@@ -1,18 +1,18 @@
 package com.torresj.unseenusers.services;
 
+import com.torresj.unseen.entities.AuthProvider;
+import com.torresj.unseen.entities.Role;
+import com.torresj.unseen.entities.UserEntity;
+import com.torresj.unseen.repositories.mutations.UserMutationRepository;
+import com.torresj.unseen.repositories.queries.UserQueryRepository;
 import com.torresj.unseenusers.dtos.PageUserDto;
 import com.torresj.unseenusers.dtos.UpdateUserDto;
 import com.torresj.unseenusers.dtos.UserDto;
 import com.torresj.unseenusers.dtos.UserRegisterDto;
-import com.torresj.unseenusers.entities.AuthProvider;
-import com.torresj.unseenusers.entities.Role;
-import com.torresj.unseenusers.entities.UserEntity;
 import com.torresj.unseenusers.exceptions.UserAlreadyExistsException;
 import com.torresj.unseenusers.exceptions.UserNotFoundException;
 import com.torresj.unseenusers.mappers.PageMapper;
 import com.torresj.unseenusers.mappers.UserMapper;
-import com.torresj.unseenusers.repositories.mutations.UserMutationRepository;
-import com.torresj.unseenusers.repositories.queries.UserQueryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

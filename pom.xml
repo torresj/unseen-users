@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.0.1</version>
+		<version>3.0.2</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.torresj</groupId>
@@ -32,6 +32,7 @@
 		<jaxb-api.version>2.4.0-b180830.0359</jaxb-api.version>
 		<jib-maven-plugin.version>3.3.1</jib-maven-plugin.version>
 		<mapstruct.version>1.5.3.Final</mapstruct.version>
+		<unseen-jpa-lib.version>1.15</unseen-jpa-lib.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -117,7 +118,7 @@
 		<dependency>
 			<groupId>com.torresj</groupId>
 			<artifactId>unseen-jpa-lib</artifactId>
-			<version>1.9</version>
+			<version>${unseen-jpa-lib.version}</version>
 		</dependency>
 	</dependencies>
 

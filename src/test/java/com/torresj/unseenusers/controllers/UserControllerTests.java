@@ -1,15 +1,15 @@
 package com.torresj.unseenusers.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.torresj.unseen.entities.AuthProvider;
+import com.torresj.unseen.entities.Role;
+import com.torresj.unseen.entities.UserEntity;
+import com.torresj.unseen.repositories.mutations.UserMutationRepository;
+import com.torresj.unseen.repositories.queries.UserQueryRepository;
 import com.torresj.unseenusers.dtos.PageUserDto;
 import com.torresj.unseenusers.dtos.UpdateUserDto;
 import com.torresj.unseenusers.dtos.UserDto;
 import com.torresj.unseenusers.dtos.UserRegisterDto;
-import com.torresj.unseenusers.entities.AuthProvider;
-import com.torresj.unseenusers.entities.Role;
-import com.torresj.unseenusers.entities.UserEntity;
-import com.torresj.unseenusers.repositories.mutations.UserMutationRepository;
-import com.torresj.unseenusers.repositories.queries.UserQueryRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
