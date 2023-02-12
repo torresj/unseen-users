@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 @EntityScan("com.torresj.unseen.entities")
-@EnableJpaRepositories("com.torresj.unseen.repositories")
 public class UnseenUsersApplication {
 
 	public static void main(String[] args) {
