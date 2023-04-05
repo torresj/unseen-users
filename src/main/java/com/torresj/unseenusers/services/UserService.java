@@ -1,10 +1,8 @@
 package com.torresj.unseenusers.services;
 
-import com.torresj.unseen.entities.AuthProvider;
-import com.torresj.unseen.entities.Role;
-import com.torresj.unseen.entities.UserEntity;
-import com.torresj.unseen.repositories.mutations.UserMutationRepository;
-import com.torresj.unseen.repositories.queries.UserQueryRepository;
+import com.torresj.unseen.entities.*;
+import com.torresj.unseen.repositories.mutations.*;
+import com.torresj.unseen.repositories.queries.*;
 import com.torresj.unseenusers.dtos.PageUserDto;
 import com.torresj.unseenusers.dtos.UpdateUserDto;
 import com.torresj.unseenusers.dtos.UserDto;
@@ -20,12 +18,23 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class UserService {
   private final UserQueryRepository userQueryRepository;
   private final UserMutationRepository userMutationRepository;
+  private final UserGroupRelationMutationRepository userGroupRelationMutationRepository;
+  private final UserGroupRelationQueryRepository userGroupRelationQueryRepository;
+  private final PairQueryRepository pairQueryRepository;
+  private final PairMutationRepository pairMutationRepository;
+  private final GroupQueryRepository groupQueryRepository;
+  private final GroupMutationRepository groupMutationRepository;
+  private final IterationQueryRepository iterationQueryRepository;
+  private final IterationMutationRepository iterationMutationRepository;
   private final PageMapper pageMapper;
   private final UserMapper userMapper;
 
@@ -143,5 +152,69 @@ public class UserService {
     log.debug("[USER SERVICE] User updated: " + user);
 
     return user;
+  }
+
+  public void delete(long id) {
+    log.debug("[USER SERVICE] deleting user " + id);
+    userMutationRepository.deleteById(id);
+
+    log.debug("[USER SERVICE] deleting any relation between groups and user " + id);
+    userGroupRelationMutationRepository.deleteAll(
+        userGroupRelationQueryRepository.findByUserId(id));
+
+    log.debug("[USER SERVICE] updating any pair that contains user " + id);
+    pairQueryRepository
+        .findByGiftingUserIdOrGiftedUserId(id, id)
+        .forEach(
+            pairEntity -> {
+              if (pairEntity.getGiftingUserId() == id) {
+                pairMutationRepository.save(
+                    PairEntity.builder()
+                        .id(pairEntity.getId())
+                        .iterationId(pairEntity.getIterationId())
+                        .giftingUserId(-1L)
+                        .giftedUserId(pairEntity.getGiftedUserId())
+                        .createAt(pairEntity.getCreateAt())
+                        .build());
+              }
+              if (pairEntity.getGiftedUserId() == id) {
+                pairMutationRepository.save(
+                    PairEntity.builder()
+                        .id(pairEntity.getId())
+                        .iterationId(pairEntity.getIterationId())
+                        .giftingUserId(pairEntity.getGiftingUserId())
+                        .giftedUserId(-1L)
+                        .createAt(pairEntity.getCreateAt())
+                        .build());
+              }
+            });
+
+    log.debug("[USER SERVICE] updating any group that is own by user " + id);
+    groupQueryRepository
+        .findByOwner(id)
+        .forEach(
+            groupEntity -> {
+              List<UserEntity> groupUsers =
+                  userGroupRelationQueryRepository.findByGroupId(groupEntity.getId()).stream()
+                      .map(
+                          userGroupRelationEntity ->
+                              userQueryRepository.findById(userGroupRelationEntity.getUserId()))
+                      .filter(Optional::isPresent)
+                      .map(Optional::get)
+                      .toList();
+              if (!groupUsers.isEmpty()) {
+                groupEntity.setOwner(groupUsers.get(0).getId());
+                groupMutationRepository.save(groupEntity);
+              } else {
+                groupMutationRepository.delete(groupEntity);
+                List<IterationEntity> iterations =
+                    iterationQueryRepository.findByGroupId(groupEntity.getId());
+                iterationMutationRepository.deleteAll(iterations);
+                iterations.forEach(
+                    iterationEntity ->
+                        pairMutationRepository.deleteAll(
+                            pairQueryRepository.findByIterationId(iterationEntity.getId())));
+              }
+            });
   }
 }

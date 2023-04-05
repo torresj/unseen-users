@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.util.Optional;
 import java.util.Random;
 
-import static com.torresj.unseenusers.utils.TestUtils.GenerateUser;
+import static com.torresj.unseenusers.utils.EntityGenerator.GenerateUser;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("test")

@@ -1,10 +1,15 @@
 package com.torresj.unseenusers.services;
 
-import com.torresj.unseen.entities.AuthProvider;
-import com.torresj.unseen.entities.Role;
-import com.torresj.unseen.entities.UserEntity;
-import com.torresj.unseen.repositories.mutations.UserMutationRepository;
-import com.torresj.unseen.repositories.queries.UserQueryRepository;
+import static com.torresj.unseenusers.utils.EntityGenerator.GenerateGroup;
+import static com.torresj.unseenusers.utils.EntityGenerator.GenerateIteration;
+import static com.torresj.unseenusers.utils.EntityGenerator.GeneratePair;
+import static com.torresj.unseenusers.utils.EntityGenerator.GenerateUser;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import com.torresj.unseen.entities.*;
+import com.torresj.unseen.repositories.mutations.*;
+import com.torresj.unseen.repositories.queries.*;
 import com.torresj.unseenusers.dtos.PageUserDto;
 import com.torresj.unseenusers.dtos.UpdateUserDto;
 import com.torresj.unseenusers.dtos.UserDto;
@@ -13,6 +18,9 @@ import com.torresj.unseenusers.exceptions.UserAlreadyExistsException;
 import com.torresj.unseenusers.exceptions.UserNotFoundException;
 import com.torresj.unseenusers.mappers.PageMapper;
 import com.torresj.unseenusers.mappers.UserMapper;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,13 +32,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-import java.util.Optional;
-
-import static com.torresj.unseenusers.utils.TestUtils.GenerateUser;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -38,6 +39,14 @@ class UserServiceTest {
   private final String password = "test";
   @Mock private UserQueryRepository userQueryRepository;
   @Mock private UserMutationRepository userMutationRepository;
+  @Mock private UserGroupRelationMutationRepository userGroupRelationMutationRepository;
+  @Mock private UserGroupRelationQueryRepository userGroupRelationQueryRepository;
+  @Mock private PairQueryRepository pairQueryRepository;
+  @Mock private PairMutationRepository pairMutationRepository;
+  @Mock private GroupQueryRepository groupQueryRepository;
+  @Mock private GroupMutationRepository groupMutationRepository;
+  @Mock private IterationQueryRepository iterationQueryRepository;
+  @Mock private IterationMutationRepository iterationMutationRepository;
   private UserService userService;
 
   @BeforeEach
@@ -45,7 +54,19 @@ class UserServiceTest {
     UserMapper userMapper = Mappers.getMapper(UserMapper.class);
     PageMapper pageMapper = new PageMapper(userMapper);
     userService =
-        new UserService(userQueryRepository, userMutationRepository, pageMapper, userMapper);
+        new UserService(
+            userQueryRepository,
+            userMutationRepository,
+            userGroupRelationMutationRepository,
+            userGroupRelationQueryRepository,
+            pairQueryRepository,
+            pairMutationRepository,
+            groupQueryRepository,
+            groupMutationRepository,
+            iterationQueryRepository,
+            iterationMutationRepository,
+            pageMapper,
+            userMapper);
   }
 
   @Test
@@ -263,5 +284,34 @@ class UserServiceTest {
         UserNotFoundException.class,
         () -> userService.update(1L, new UpdateUserDto(email, password, true, Role.ADMIN)),
         "User not found exception should be thrown");
+  }
+
+  @Test
+  @DisplayName("Delete user")
+  void deleteUser() {
+    UserEntity userEntityMock = GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true);
+    UserEntity userEntityMock2 =
+        GenerateUser("test2@test.com", password, Role.USER, AuthProvider.UNSEEN, true);
+    GroupEntity groupEntityMock = GenerateGroup("test", "test", userEntityMock.getId(), false);
+    IterationEntity iterationEntityMock = GenerateIteration(groupEntityMock.getId());
+    PairEntity pairEntityMock =
+        GeneratePair(iterationEntityMock.getId(), userEntityMock.getId(), userEntityMock2.getId());
+
+    UserGroupRelationEntity userGroupRelation =
+        UserGroupRelationEntity.builder()
+            .groupId(groupEntityMock.getId())
+            .userId(userEntityMock.getId())
+            .build();
+
+    // Mocks
+    when(userGroupRelationQueryRepository.findByUserId(userEntityMock.getId()))
+        .thenReturn(List.of(userGroupRelation));
+    when(pairQueryRepository.findByGiftingUserIdOrGiftedUserId(
+            userEntityMock.getId(), userEntityMock.getId()))
+        .thenReturn(List.of(pairEntityMock));
+    when(groupQueryRepository.findByOwner(userEntityMock.getId()))
+        .thenReturn(Collections.emptyList());
+
+    userService.delete(userEntityMock.getId());
   }
 }
