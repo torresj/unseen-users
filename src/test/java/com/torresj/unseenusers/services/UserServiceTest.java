@@ -288,7 +288,7 @@ class UserServiceTest {
 
   @Test
   @DisplayName("Delete user")
-  void deleteUser() {
+  void deleteUser()throws UserNotFoundException {
     UserEntity userEntityMock = GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true);
     UserEntity userEntityMock2 =
         GenerateUser("test2@test.com", password, Role.USER, AuthProvider.UNSEEN, true);
@@ -304,6 +304,8 @@ class UserServiceTest {
             .build();
 
     // Mocks
+    when(userQueryRepository.findById(userEntityMock.getId()))
+            .thenReturn(Optional.of(userEntityMock));
     when(userGroupRelationQueryRepository.findByUserId(userEntityMock.getId()))
         .thenReturn(List.of(userGroupRelation));
     when(pairQueryRepository.findByGiftingUserIdOrGiftedUserId(

@@ -1,15 +1,21 @@
 package com.torresj.unseenusers.controllers;
 
+import static com.torresj.unseenusers.utils.EntityGenerator.GenerateGroup;
+import static com.torresj.unseenusers.utils.EntityGenerator.GenerateUser;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.torresj.unseen.entities.AuthProvider;
-import com.torresj.unseen.entities.Role;
-import com.torresj.unseen.entities.UserEntity;
+import com.torresj.unseen.entities.*;
+import com.torresj.unseen.repositories.mutations.GroupMutationRepository;
+import com.torresj.unseen.repositories.mutations.UserGroupRelationMutationRepository;
 import com.torresj.unseen.repositories.mutations.UserMutationRepository;
 import com.torresj.unseen.repositories.queries.UserQueryRepository;
 import com.torresj.unseenusers.dtos.PageUserDto;
 import com.torresj.unseenusers.dtos.UpdateUserDto;
 import com.torresj.unseenusers.dtos.UserDto;
 import com.torresj.unseenusers.dtos.UserRegisterDto;
+import java.util.Optional;
+import java.util.Random;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,12 +27,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import java.util.Optional;
-import java.util.Random;
-
-import static com.torresj.unseenusers.utils.EntityGenerator.GenerateUser;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -46,10 +46,13 @@ class UserControllerTests {
 
   @Autowired private UserMutationRepository userMutationRepository;
   @Autowired private UserQueryRepository userQueryRepository;
+  @Autowired private GroupMutationRepository groupMutationRepository;
+  @Autowired private UserGroupRelationMutationRepository userGroupRelationMutationRepository;
 
   @BeforeEach
   public void init() {
     userMutationRepository.deleteAll();
+    groupMutationRepository.deleteAll();
   }
 
   @Test
@@ -284,5 +287,46 @@ class UserControllerTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateUserDto)))
         .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("Delete user that not exists")
+  void deleteUserNotExists() throws Exception {
+
+    // Register
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.delete("/v1/users/" + new Random().nextInt())
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  @DisplayName("Delete user that is owner of a group without more users")
+  void deleteUserWithOwnerGroup() throws Exception {
+
+    UserEntity userEntity =
+        userMutationRepository.save(
+            GenerateUser(email, password, Role.USER, AuthProvider.UNSEEN, true));
+    GroupEntity groupEntity =
+        groupMutationRepository.save(GenerateGroup("Group", "test", userEntity.getId(), true));
+
+    userGroupRelationMutationRepository.save(
+        UserGroupRelationEntity.builder()
+            .userId(userEntity.getId())
+            .groupId(groupEntity.getId())
+            .build());
+
+    // Register
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.delete("/v1/users/" + userEntity.getId())
+                .accept(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON))
+        .andExpect(status().isOk());
+
+    Assertions.assertFalse(userMutationRepository.findById(userEntity.getId()).isPresent());
+    Assertions.assertFalse(groupMutationRepository.findById(groupEntity.getId()).isPresent());
   }
 }

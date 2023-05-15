@@ -11,15 +11,14 @@ import com.torresj.unseenusers.exceptions.UserAlreadyExistsException;
 import com.torresj.unseenusers.exceptions.UserNotFoundException;
 import com.torresj.unseenusers.mappers.PageMapper;
 import com.torresj.unseenusers.mappers.UserMapper;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -154,8 +153,9 @@ public class UserService {
     return user;
   }
 
-  public void delete(long id) {
+  public void delete(long id)throws UserNotFoundException {
     log.debug("[USER SERVICE] deleting user " + id);
+    userQueryRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
     userMutationRepository.deleteById(id);
 
     log.debug("[USER SERVICE] deleting any relation between groups and user " + id);
